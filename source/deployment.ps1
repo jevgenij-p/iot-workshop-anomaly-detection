@@ -22,7 +22,7 @@ $location="northeurope"
 $iotHub="anomaly-detection-hub"
 $iotHubSku="S1"
 $iotHubSharedAccessPolicy="iothubowner"
-$iotHubAsaConsumerGroup="asaConsumerGroup"
+$iotHubAsaConsumerGroup="asaconsumergroup"
 
 
 #----------------------------------------------------------------------------------------------------
