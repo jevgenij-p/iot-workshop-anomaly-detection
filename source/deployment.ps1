@@ -2,7 +2,7 @@
     .DESCRIPTION
     Deployment script creating an IoT Hub, Device Provisioning Service,
     and Time Series Insights.
-    Run it using the command: pwsh .\deployment.ps
+    Run it using the command: pwsh .\deployment.ps1
 #>
 
 . ".\functions.ps1"
@@ -56,7 +56,6 @@ $iotHubPolicySharedAccessKey=$(az iot hub policy show --hub-name $iotHub --name 
 
 # Read IoT Hub resource id
 $iotHubResourceId=$(az iot hub show --name $iotHub --query id --output tsv)
-
 
 #----------------------------------------------------------------------------------------------------
 # Create an Azure IoT Hub device provisioning service (DPS)
