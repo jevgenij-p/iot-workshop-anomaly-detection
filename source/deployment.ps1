@@ -239,6 +239,7 @@ az eventhubs eventhub create `
     --name $eventHubNameForFunc `
     --message-retention 1
 
+# Create a shared access policy
 az eventhubs namespace authorization-rule create `
     --resource-group $resourceGroup `
     --namespace-name $eventHubsNamespace `
