@@ -85,7 +85,7 @@ $primaryKey=Get-RandomKey
 $secondaryKey=Get-RandomKey
 
 # DPS Enrollment Group name
-$enrollmentId="AnomalyDetection"
+$enrollmentId="anomaly-detection-group"
 
 az iot dps enrollment-group create `
     -g $resourceGroup `
@@ -96,66 +96,6 @@ az iot dps enrollment-group create `
 
 # Read DPS ID Scope
 $idScope=$(az iot dps show --name $dps --resource-group $resourceGroup --query properties.idScope --output tsv)
-
-
-#----------------------------------------------------------------------------------------------------
-# Create an Azure Time Series Insights Gen2
-# See: https://docs.microsoft.com/en-us/azure/time-series-insights/how-to-create-environment-using-cli
-
-# Create an Azure storage account for tsi environment's cold store
-
-$randomString=Get-RandomLowercaseAndNumbers 16
-$tsiStorage="storage"+$randomString
-
-az storage account create -g $resourceGroup -n $tsiStorage --https-only
-$storageKey=$(az storage account keys list -g $resourceGroup -n $tsiStorage --query [0].value --output tsv)
-
-#----------------------------------------------------------------------------------------------------
-# Create the Azure Time Series Insights Environment
-# See: https://docs.microsoft.com/en-us/cli/azure/tsi/environment/gen2?view=azure-cli-latest#az_tsi_environment_gen2_create
-
-$tsiEnvName="time-series-insights"
-$tsiPropertyId="iothub-connection-device-id"
-$tsiSkuName="L1"
-
-az tsi environment gen2 create `
-    --name $tsiEnvName `
-    --location $location `
-    --resource-group $resourceGroup `
-    --sku name=$tsiSkuName capacity=1 `
-    --time-series-id-properties name=$tsiPropertyId type=String `
-    --warm-store-configuration data-retention=P7D `
-    --storage-configuration account-name=$tsiStorage management-key=$storageKey
-
-#----------------------------------------------------------------------------------------------------
-# Create an event source under the Azure Time Series Insights Environment
-# See: https://docs.microsoft.com/en-us/cli/azure/tsi/event-source/iothub?view=azure-cli-latest
-
-$eventSourceName="ioteventsource"
-$consumerGroupName="`$Default"
-
-az tsi event-source iothub create `
-    -g $resourceGroup `
-    --environment-name $tsiEnvName `
-    --name $eventSourceName `
-    --consumer-group-name $consumerGroupName `
-    --iot-hub-name $iotHub `
-    --location $location `
-    --key-name $iotHubSharedAccessPolicy `
-    --shared-access-key $iotHubPolicySharedAccessKey `
-    --event-source-resource-id $iotHubResourceId
-
-#----------------------------------------------------------------------------------------------------
-# Create a data access policy granting access to the signed in user
-# See: https://docs.microsoft.com/en-us/cli/azure/tsi/access-policy?view=azure-cli-latest
-
-az tsi access-policy create `
-    --name "roleAssignment" `
-    --environment-name $tsiEnvName `
-    --description "TSI owner" `
-    --principal-object-id $principalObjectId `
-    --roles Reader Contributor `
-    --resource-group $resourceGroup
 
 
 #----------------------------------------------------------------------------------------------------
@@ -322,7 +262,7 @@ WITH AnomalyDetectionStep AS
     WHERE temperature IS NOT NULL
 )
 SELECT
-    id AS 'iothub-connection-device-id',
+    id AS 'device-id',
     time,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) as temperature_anomaly,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'Score') AS float) AS temperature_anomaly_score
@@ -352,6 +292,65 @@ az stream-analytics transformation create `
 # Start a streaming job
 az stream-analytics job start --resource-group $resourceGroup --name $streamJob
 
+
+#----------------------------------------------------------------------------------------------------
+# Create an Azure Time Series Insights Gen2
+# See: https://docs.microsoft.com/en-us/azure/time-series-insights/how-to-create-environment-using-cli
+
+# Create an Azure storage account for tsi environment's cold store
+
+$randomString=Get-RandomLowercaseAndNumbers 16
+$tsiStorage="storage"+$randomString
+
+az storage account create -g $resourceGroup -n $tsiStorage --https-only
+$storageKey=$(az storage account keys list -g $resourceGroup -n $tsiStorage --query [0].value --output tsv)
+
+#----------------------------------------------------------------------------------------------------
+# Create the Azure Time Series Insights Environment
+# See: https://docs.microsoft.com/en-us/cli/azure/tsi/environment/gen2?view=azure-cli-latest#az_tsi_environment_gen2_create
+
+$tsiEnvName="time-series-insights"
+$tsiPropertyId="device-id"
+$tsiSkuName="L1"
+
+az tsi environment gen2 create `
+    --name $tsiEnvName `
+    --location $location `
+    --resource-group $resourceGroup `
+    --sku name=$tsiSkuName capacity=1 `
+    --time-series-id-properties name=$tsiPropertyId type=String `
+    --warm-store-configuration data-retention=P7D `
+    --storage-configuration account-name=$tsiStorage management-key=$storageKey
+
+#----------------------------------------------------------------------------------------------------
+# Create an event source under the Azure Time Series Insights Environment
+# See: https://docs.microsoft.com/en-us/cli/azure/tsi/event-source/iothub?view=azure-cli-latest
+
+$eventSourceName="ioteventsource"
+$consumerGroupName="`$Default"
+
+az tsi event-source iothub create `
+    -g $resourceGroup `
+    --environment-name $tsiEnvName `
+    --name $eventSourceName `
+    --consumer-group-name $consumerGroupName `
+    --iot-hub-name $iotHub `
+    --location $location `
+    --key-name $iotHubSharedAccessPolicy `
+    --shared-access-key $iotHubPolicySharedAccessKey `
+    --event-source-resource-id $iotHubResourceId
+
+#----------------------------------------------------------------------------------------------------
+# Create a data access policy granting access to the signed in user
+# See: https://docs.microsoft.com/en-us/cli/azure/tsi/access-policy?view=azure-cli-latest
+
+az tsi access-policy create `
+    --name "roleAssignment" `
+    --environment-name $tsiEnvName `
+    --description "TSI owner" `
+    --principal-object-id $principalObjectId `
+    --roles Reader Contributor `
+    --resource-group $resourceGroup
 
 #----------------------------------------------------------------------------------------------------
 # Add an Event Hub as an event source under the Azure Time Series Insights Environment
