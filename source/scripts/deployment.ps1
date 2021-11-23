@@ -155,8 +155,8 @@ az stream-analytics input create `
 
 $randomString=Get-RandomLowercaseAndNumbers 16
 $eventHubsNamespace="ehns"+$randomString
-$eventHubName="asaeventhub"
-$eventHubNameForFunc="faeventhub"
+$eventHub1="eventhub1"
+$eventHub2="eventhub2"
 $eventHubSharedAccessPolicy="eventHubSharedAccessPolicy"
 
 az eventhubs namespace create `
@@ -165,18 +165,18 @@ az eventhubs namespace create `
     --location $location `
     --sku Standard
 
-# Create two event hubs for two outputs: asaeventhub for stream analytics and faeventhub for azure functions
+# Create two event hubs for two outputs: eventhub1 for Time Series Insights and eventhub2 for Azure Functions
 
 az eventhubs eventhub create `
     --resource-group $resourceGroup `
     --namespace-name $eventHubsNamespace `
-    --name $eventHubName `
+    --name $eventHub1 `
     --message-retention 1
 
 az eventhubs eventhub create `
     --resource-group $resourceGroup `
     --namespace-name $eventHubsNamespace `
-    --name $eventHubNameForFunc `
+    --name $eventHub2 `
     --message-retention 1
 
 # Create a shared access policy
@@ -194,7 +194,7 @@ az eventhubs namespace authorization-rule show `
 $eventHubSharedAccessPolicyKey=$(az eventhubs namespace authorization-rule keys list --resource-group $resourceGroup --namespace-name $eventHubsNamespace --name $eventHubSharedAccessPolicy --query primaryKey --output tsv)
 
 # Read Event Hub resource id
-$eventHubResourceId=$(az eventhubs eventhub show --resource-group $resourceGroup --namespace-name $eventHubsNamespace --name $eventHubName --query id --output tsv)
+$eventHubResourceId=$(az eventhubs eventhub show --resource-group $resourceGroup --namespace-name $eventHubsNamespace --name $eventHub1 --query id --output tsv)
 
 $datasource1=@"
 {
@@ -203,7 +203,7 @@ $datasource1=@"
         'serviceBusNamespace': \"$eventHubsNamespace\",
         'sharedAccessPolicyName': \"$eventHubSharedAccessPolicy\",
         'sharedAccessPolicyKey': \"$eventHubSharedAccessPolicyKey\",
-        'eventHubName': \"$eventHubName\"
+        'eventHubName': \"$eventHub1\"
         }
 }
 "@.Replace("'",'\"').Replace("`n",'')
@@ -215,7 +215,7 @@ $datasource2=@"
         'serviceBusNamespace': \"$eventHubsNamespace\",
         'sharedAccessPolicyName': \"$eventHubSharedAccessPolicy\",
         'sharedAccessPolicyKey': \"$eventHubSharedAccessPolicyKey\",
-        'eventHubName': \"$eventHubNameForFunc\"
+        'eventHubName': \"$eventHub2\"
         }
 }
 "@.Replace("'",'\"').Replace("`n",'')
@@ -364,7 +364,7 @@ az tsi event-source eventhub create `
     --environment-name $tsiEnvName `
     --consumer-group-name $consumerGroupName `
     --namespace $eventHubsNamespace `
-    --event-hub-name $eventHubName `
+    --event-hub-name $eventHub1 `
     --event-source-name $eventSourceName `
     --event-source-resource-id $eventHubResourceId `
     --location $location `
