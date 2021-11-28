@@ -34,7 +34,7 @@ from azure.iot.device.exceptions import ConnectionFailedError
 BASE_TEMPERATURE = 20.0
 BASE_HUMIDITY = 60.0
 TEMPERATURE_INCREMENT = 2
-DELAY = 5.0
+DELAY = 2.0
 
 class Config:
     def __init__(self):
@@ -59,7 +59,7 @@ class Config:
         return hash
 
 def print_help():
-    print("\nPress the following keys:")
+    print("\nPress the following key and <Enter>:")
     print("   +  to increase temperature")
     print("   -  to decrease temperature")
     print("   q  to quit\n")
@@ -83,10 +83,12 @@ def stdin_listener(config: Config):
 
 def get_telemetry(config: Config) -> dict:
 
-    temperature = round(config.base_temperature + random.random(), 2)
-    humidity = round(BASE_HUMIDITY + (random.random() * 3), 2)
+    temperature_noise = (random.random() * 2) - 1
+    temperature = round(config.base_temperature + temperature_noise, 2)
+    humidity_noise = (random.random() * 3) - 1
+    humidity = round(BASE_HUMIDITY + humidity_noise, 2)
     telemetry = { "temperature": temperature, "humidity": humidity }
-    print(f"Message: temperature: {temperature}  humidity: {humidity}     \r", end="")
+    print(f"Message: temperature: {temperature}  humidity: {humidity}")
     return telemetry
 
 async def provision_device(config: Config):

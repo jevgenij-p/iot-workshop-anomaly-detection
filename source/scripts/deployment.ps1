@@ -186,11 +186,6 @@ az eventhubs namespace authorization-rule create `
     --name $eventHubSharedAccessPolicy `
     --rights Manage Send Listen
 
-az eventhubs namespace authorization-rule show `
-    --resource-group $resourceGroup `
-    --namespace-name $eventHubsNamespace `
-    --name $eventHubSharedAccessPolicy
-
 $eventHubSharedAccessPolicyKey=$(az eventhubs namespace authorization-rule keys list --resource-group $resourceGroup --namespace-name $eventHubsNamespace --name $eventHubSharedAccessPolicy --query primaryKey --output tsv)
 
 # Read Event Hub resource id
@@ -256,15 +251,15 @@ WITH AnomalyDetectionStep AS
         IoTHub.ConnectionDeviceId AS id,
         EventEnqueuedUtcTime AS time,
         CAST(temperature AS float) AS temp,
-        AnomalyDetection_SpikeAndDip(CAST(temperature AS float), 94, 240, 'spikesanddips')
-            OVER(PARTITION BY id LIMIT DURATION(second, 1200)) AS SpikeAndDipScores
+        AnomalyDetection_SpikeAndDip(CAST(temperature AS float), 95, 120, 'spikesanddips')
+            OVER(PARTITION BY id LIMIT DURATION(second, 600)) AS SpikeAndDipScores
     FROM input
     WHERE temperature IS NOT NULL
 )
 SELECT
-    id AS 'device-id',
+    id AS 'iothub-connection-device-id',
     time,
-    CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) as temperature_anomaly,
+    CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) AS temperature_anomaly,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'Score') AS float) AS temperature_anomaly_score
 INTO output1
 FROM AnomalyDetectionStep;
@@ -272,10 +267,10 @@ FROM AnomalyDetectionStep;
 SELECT 
     id AS 'device-id',
     time,
-    temp as temperature,
-    CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) as temperature_anomaly,
+    temp AS temperature,
+    CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) AS temperature_anomaly,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'Score') AS float) AS temperature_anomaly_score,
-    ISFIRST(mi, 1) OVER (PARTITION BY id WHEN CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) = 1) as first 
+    ISFIRST(mi, 1) OVER (PARTITION BY id WHEN CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) = 1) AS first 
 INTO output2
 FROM AnomalyDetectionStep
 WHERE CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) = 1
@@ -310,7 +305,7 @@ $storageKey=$(az storage account keys list -g $resourceGroup -n $tsiStorage --qu
 # See: https://docs.microsoft.com/en-us/cli/azure/tsi/environment/gen2?view=azure-cli-latest#az_tsi_environment_gen2_create
 
 $tsiEnvName="time-series-insights"
-$tsiPropertyId="device-id"
+$tsiPropertyId="iothub-connection-device-id"
 $tsiSkuName="L1"
 
 az tsi environment gen2 create `
@@ -356,7 +351,7 @@ az tsi access-policy create `
 # Add an Event Hub as an event source under the Azure Time Series Insights Environment
 # See: https://docs.microsoft.com/en-us/cli/azure/tsi/event-source/eventhub?view=azure-cli-latest
 
-$eventSourceName="eventhubeventsource"
+$eventSourceName="eventhubsource"
 $consumerGroupName="`$Default"
 
 az tsi event-source eventhub create `

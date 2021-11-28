@@ -1,5 +1,5 @@
 *.code-workspace
 .vscode/settings.json
 .vscode/.ropeproject/
-source/send-telemetry/__pycache__/
-source/send-telemetry/env/
+source/simulator/python/__pycache__/
+source/simulator/python/env/
