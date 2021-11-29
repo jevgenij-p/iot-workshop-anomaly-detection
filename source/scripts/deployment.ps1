@@ -96,7 +96,7 @@ az iot dps enrollment-group create `
 
 # Read DPS ID Scope
 $idScope=$(az iot dps show --name $dps --resource-group $resourceGroup --query properties.idScope --output tsv)
-
+exit
 
 #----------------------------------------------------------------------------------------------------
 # Create a Stream Analytics job

@@ -7,7 +7,7 @@
 #   2) Set environment variables:
 #       DPS_ENDPOINT (optional)
 #       DPS_ID_SCOPE
-#       DEVICE_ID
+#       DPS_DEVICE_ID
 #       DPS_PRIMARY_KEY
 #   3) Run the following command:
 #       python telemetry.py
@@ -44,14 +44,14 @@ class Config:
             else "global.azure-devices-provisioning.net"
             )
         self.id_scope = os.getenv("DPS_ID_SCOPE")
-        self.device_id = os.getenv("DEVICE_ID")
+        self.device_id = os.getenv("DPS_DEVICE_ID")
         self.primary_key = os.getenv("DPS_PRIMARY_KEY")
         self.device_key = self.generate_device_key(self.primary_key, self.device_id)
         self.base_temperature = BASE_TEMPERATURE
 
-    def generate_device_key(self, primmary_key, device_id) -> str:
+    def generate_device_key(self, primary_key, device_id) -> str:
         signature = hmac.new(
-            base64.b64decode(primmary_key),
+            base64.b64decode(primary_key),
             msg=device_id.encode('ascii'),
             digestmod=hashlib.sha256
         )

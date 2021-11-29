@@ -3,3 +3,5 @@
 .vscode/.ropeproject/
 source/simulator/python/__pycache__/
 source/simulator/python/env/
+source/simulator/csharp/telemetry/bin/
+source/simulator/csharp/telemetry/obj/
