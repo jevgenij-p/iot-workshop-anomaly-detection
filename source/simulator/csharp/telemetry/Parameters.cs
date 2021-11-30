@@ -12,6 +12,12 @@ namespace telemetry
         public string DpsPrimaryKey { get; set; } = Environment.GetEnvironmentVariable("DPS_PRIMARY_KEY");
         public string DeviceSymmetricKey { get; set; }
 
+        public Parameters()
+        {
+            if (string.IsNullOrEmpty(this.DpsEndpoint))
+                this.DpsEndpoint = "global.azure-devices-provisioning.net";
+        }
+
         public void GenerateDeviceKey()
         {
             byte[] key = Convert.FromBase64String(this.DpsPrimaryKey);
@@ -20,7 +26,7 @@ namespace telemetry
                 var ascii = new ASCIIEncoding();
                 byte[] bytes = ascii.GetBytes(this.DeviceId);
                 byte[] signature = hmac.ComputeHash(bytes);
-                this.DpsPrimaryKey = Convert.ToBase64String(signature);
+                this.DeviceSymmetricKey = Convert.ToBase64String(signature);
             }
         }
     }
