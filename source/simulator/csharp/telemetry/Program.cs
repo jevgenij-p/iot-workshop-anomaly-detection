@@ -6,8 +6,6 @@ using Microsoft.Azure.Devices.Provisioning.Client;
 using Microsoft.Azure.Devices.Provisioning.Client.Transport;
 using Microsoft.Azure.Devices.Shared;
 
-// https://github.com/Azure-Samples/azure-iot-samples-csharp/blob/main/iot-hub/Samples/device/PnpDeviceSamples/Thermostat/Program.cs
-
 namespace telemetry
 {
     class Program
@@ -15,7 +13,7 @@ namespace telemetry
         public static async Task Main(string[] args)
         {
             Console.WriteLine("IoT Device Simulator");
-            Console.WriteLine("Press Control+C to quit");
+            Console.WriteLine("Press Control+C to quit\n");
 
             var parameters = new Parameters();
             parameters.GenerateDeviceKey();
@@ -49,6 +47,11 @@ namespace telemetry
                 Console.WriteLine("IoT Device was assigned");
                 Console.WriteLine($"Assigned Hub: {dpsRegistrationResult.AssignedHub}");
                 Console.WriteLine($"Device id: {dpsRegistrationResult.DeviceId}");
+            }
+            else
+            {
+                Console.WriteLine($"Could not provision device. Provisioning status: {dpsRegistrationResult.Status}");
+                Environment.Exit(0);
             }
 
             var authMethod = new DeviceAuthenticationWithRegistrySymmetricKey(dpsRegistrationResult.DeviceId, parameters.DeviceSymmetricKey);

@@ -66,12 +66,13 @@ namespace telemetry
                 while (true)
                 {
                     var text = await Console.In.ReadLineAsync();
-                    if (text.ToLower() == "+")
+                    text = text.ToLower();
+                    if (text == "+")
                     {
                         base_temperature += TEMPERATURE_INCREMENT;
                         Console.WriteLine("Temperature increased");
                     }
-                    if (text.ToLower() == "-")
+                    if (text == "-")
                     {
                         base_temperature -= TEMPERATURE_INCREMENT;
                         Console.WriteLine("Temperature decreased");
