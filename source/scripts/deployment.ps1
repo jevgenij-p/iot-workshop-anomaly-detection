@@ -96,7 +96,7 @@ az iot dps enrollment-group create `
 
 # Read DPS ID Scope
 $idScope=$(az iot dps show --name $dps --resource-group $resourceGroup --query properties.idScope --output tsv)
-exit
+
 
 #----------------------------------------------------------------------------------------------------
 # Create a Stream Analytics job
@@ -250,15 +250,18 @@ WITH AnomalyDetectionStep AS
     SELECT
         IoTHub.ConnectionDeviceId AS id,
         EventEnqueuedUtcTime AS time,
-        CAST(temperature AS float) AS temp,
+        CAST(temperature AS float) AS temperature,
+        CAST(humidity AS float) AS humidity,
         AnomalyDetection_SpikeAndDip(CAST(temperature AS float), 95, 120, 'spikesanddips')
-            OVER(PARTITION BY id LIMIT DURATION(second, 600)) AS SpikeAndDipScores
+            OVER(PARTITION BY id LIMIT DURATION(second, 240)) AS SpikeAndDipScores
     FROM input
     WHERE temperature IS NOT NULL
 )
 SELECT
-    id AS 'iothub-connection-device-id',
+    id AS 'device-id',
     time,
+    temperature,
+    humidity,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) AS temperature_anomaly,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'Score') AS float) AS temperature_anomaly_score
 INTO output1
@@ -267,7 +270,7 @@ FROM AnomalyDetectionStep;
 SELECT 
     id AS 'device-id',
     time,
-    temp AS temperature,
+    temperature,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) AS temperature_anomaly,
     CAST(GetRecordPropertyValue(SpikeAndDipScores, 'Score') AS float) AS temperature_anomaly_score,
     ISFIRST(mi, 1) OVER (PARTITION BY id WHEN CAST(GetRecordPropertyValue(SpikeAndDipScores, 'IsAnomaly') AS bigint) = 1) AS first 
@@ -287,7 +290,7 @@ az stream-analytics transformation create `
 # Start a streaming job
 az stream-analytics job start --resource-group $resourceGroup --name $streamJob
 
-
+exit
 #----------------------------------------------------------------------------------------------------
 # Create an Azure Time Series Insights Gen2
 # See: https://docs.microsoft.com/en-us/azure/time-series-insights/how-to-create-environment-using-cli
