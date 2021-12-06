@@ -290,7 +290,7 @@ az stream-analytics transformation create `
 # Start a streaming job
 az stream-analytics job start --resource-group $resourceGroup --name $streamJob
 
-exit
+
 #----------------------------------------------------------------------------------------------------
 # Create an Azure Time Series Insights Gen2
 # See: https://docs.microsoft.com/en-us/azure/time-series-insights/how-to-create-environment-using-cli
@@ -308,7 +308,7 @@ $storageKey=$(az storage account keys list -g $resourceGroup -n $tsiStorage --qu
 # See: https://docs.microsoft.com/en-us/cli/azure/tsi/environment/gen2?view=azure-cli-latest#az_tsi_environment_gen2_create
 
 $tsiEnvName="time-series-insights"
-$tsiPropertyId="iothub-connection-device-id"
+$tsiPropertyId="device-id"
 $tsiSkuName="L1"
 
 az tsi environment gen2 create `
@@ -322,39 +322,9 @@ az tsi environment gen2 create `
 
 #----------------------------------------------------------------------------------------------------
 # Create an event source under the Azure Time Series Insights Environment
-# See: https://docs.microsoft.com/en-us/cli/azure/tsi/event-source/iothub?view=azure-cli-latest
-
-$eventSourceName="ioteventsource"
-$consumerGroupName="`$Default"
-
-az tsi event-source iothub create `
-    -g $resourceGroup `
-    --environment-name $tsiEnvName `
-    --name $eventSourceName `
-    --consumer-group-name $consumerGroupName `
-    --iot-hub-name $iotHub `
-    --location $location `
-    --key-name $iotHubSharedAccessPolicy `
-    --shared-access-key $iotHubPolicySharedAccessKey `
-    --event-source-resource-id $iotHubResourceId
-
-#----------------------------------------------------------------------------------------------------
-# Create a data access policy granting access to the signed in user
-# See: https://docs.microsoft.com/en-us/cli/azure/tsi/access-policy?view=azure-cli-latest
-
-az tsi access-policy create `
-    --name "roleAssignment" `
-    --environment-name $tsiEnvName `
-    --description "TSI owner" `
-    --principal-object-id $principalObjectId `
-    --roles Reader Contributor `
-    --resource-group $resourceGroup
-
-#----------------------------------------------------------------------------------------------------
-# Add an Event Hub as an event source under the Azure Time Series Insights Environment
 # See: https://docs.microsoft.com/en-us/cli/azure/tsi/event-source/eventhub?view=azure-cli-latest
 
-$eventSourceName="eventhubsource"
+$eventSourceName="ioteventsource"
 $consumerGroupName="`$Default"
 
 az tsi event-source eventhub create `
@@ -368,6 +338,18 @@ az tsi event-source eventhub create `
     --location $location `
     --key-name $eventHubSharedAccessPolicy `
     --shared-access-key $eventHubSharedAccessPolicyKey
+                                
+#----------------------------------------------------------------------------------------------------
+# Create a data access policy granting access to the signed in user
+# See: https://docs.microsoft.com/en-us/cli/azure/tsi/access-policy?view=azure-cli-latest
+
+az tsi access-policy create `
+    --name "roleAssignment" `
+    --environment-name $tsiEnvName `
+    --description "TSI owner" `
+    --principal-object-id $principalObjectId `
+    --roles Reader Contributor `
+    --resource-group $resourceGroup
 
 
 $elapsedTime = $(get-date) - $startTime
