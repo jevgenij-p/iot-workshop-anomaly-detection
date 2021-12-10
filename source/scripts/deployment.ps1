@@ -54,8 +54,6 @@ $iotHubConnection=$(az iot hub connection-string show -n $iotHub --output tsv)
 # Read the "iothubowner" Shared Access Policy key of the IoT Hub
 $iotHubPolicySharedAccessKey=$(az iot hub policy show --hub-name $iotHub --name $iotHubSharedAccessPolicy --query primaryKey --output tsv)
 
-# Read IoT Hub resource id
-$iotHubResourceId=$(az iot hub show --name $iotHub --query id --output tsv)
 
 #----------------------------------------------------------------------------------------------------
 # Create an Azure IoT Hub device provisioning service (DPS)
