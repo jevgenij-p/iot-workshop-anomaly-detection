@@ -48,8 +48,8 @@ namespace IoTLab.Workshop
             string username = GetEnvironmentVariable("EMAIL_USER_NAME");
             string password = GetEnvironmentVariable("EMAIL_USER_PASSWORD");
             var msg = new MailMessage();
-            msg.To.Add(new MailAddress(GetEnvironmentVariable("TO_MAIL_ADDRESS")));
-            msg.From = new MailAddress(GetEnvironmentVariable("FROM_MAIL_ADDRESS"));
+            msg.To.Add(new MailAddress(username));
+            msg.From = new MailAddress(username);
             msg.Subject = "Temperature anomaly detected";
             msg.Body = message;
             msg.IsBodyHtml = true;
