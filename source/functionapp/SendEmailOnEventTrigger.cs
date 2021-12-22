@@ -46,7 +46,7 @@ namespace IoTLab.Workshop
         private static async Task SendEmail(string message)
         {
             string username = GetEnvironmentVariable("EMAIL_USER_NAME");
-            string password = GetEnvironmentVariable("EMAIL_USER_PASSWORD");
+            string password = GetEnvironmentVariable("EMAIL_PASSWORD");
             var msg = new MailMessage();
             msg.To.Add(new MailAddress(username));
             msg.From = new MailAddress(username);
